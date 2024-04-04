@@ -23,7 +23,7 @@ class BookingSerializer(serializers.ModelSerializer):
     customer = UserSerializer(read_only=True)
     class Meta:
         model = Booking
-        fields = ['customer', 'event', 'transaction_amt', 'status', 'ticket_type']
+        fields = ['customer', 'event', 'transaction_amt', 'status', 'ticket_type', 'no_of_seats']
 
     def create(self, validated_data):
         validated_data['customer'] = self.context['request'].user
