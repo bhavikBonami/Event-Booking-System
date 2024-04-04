@@ -10,13 +10,14 @@ class Register(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            cust_type = request.data.get('cust_type', False)
+            serializer.save(cust_type=cust_type)
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserListView(APIView):
-    def get(self, request):    
+    def get(self, request):
         queryset = Customer.objects.all()
         serializer = UserSerializer(queryset, many=True)
         return Response({"users": serializer.data})

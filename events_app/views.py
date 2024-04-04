@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import EventSerializer, TicketsSerializer, BookingSerializer
 from django.http import JsonResponse
-from configuration import message, constants
+from configuration import message, constants, utils
 from .models import *
 from .permissions import IsOrganizer, IsUser, IsCustomer
 from rest_framework.permissions import IsAuthenticated
@@ -25,16 +25,11 @@ class TicketList(APIView):
                 }
                 return Response(response)
             else:
-                error_response = {constants.MESSAGE: message.BAD_REQUEST, constants.STATUS: status.HTTP_400_BAD_REQUEST}
-                return Response(error_response)
+                return utils.failure_response(message=message.BAD_REQUEST,status_code=status.HTTP_400_BAD_REQUEST)
                 
         except Exception as error:
             print('Error in add tickets: ', error)
-            error_response = {
-                constants.MESSAGE: message.INTERNAL_SERVER_ERROR,
-                constants.STATUS: status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
-            return Response(error_response)
+            return utils.failure_response(message=message.INTERNAL_SERVER_ERROR,status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AddEvents(APIView):
     permission_classes = [IsOrganizer]
@@ -56,16 +51,11 @@ class AddEvents(APIView):
                 return Response(response)
             else:
                 print(event_serializer.errors)
-                error_response = {"status": status.HTTP_400_BAD_REQUEST, constants.MESSAGE: message.BAD_REQUEST}
-                return Response(error_response)
+                return utils.failure_response(message=message.BAD_REQUEST,status_code=status.HTTP_400_BAD_REQUEST)
                 
         except Exception as error:
             print('Error in add events: ', error)
-            error_response = {
-                constants.MESSAGE: message.INTERNAL_SERVER_ERROR,
-                "status": status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
-            return Response(error_response)
+            return utils.failure_response(message=message.INTERNAL_SERVER_ERROR,status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # To View All Events
 class EventsList(APIView):
@@ -82,15 +72,15 @@ class EventsList(APIView):
             else:
                 all_events = Events.objects.filter(active=True)
                 event_serializer = EventSerializer(all_events, many=True)
-                return Response({"status":status.HTTP_200_OK, constants.MESSAGE:message.EVENTS_FETCHED, constants.DATA: event_serializer.data})
+                return utils.success_response(status_code=status.HTTP_200_OK, message=message.EVENTS_FETCHED, data=event_serializer.data)
+            
         except Exception as error:
             print('Error in get events: ', error)
-            error_response = {
-                constants.MESSAGE: message.INTERNAL_SERVER_ERROR,
-                "status": status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
-            return Response(error_response)
+            return utils.failure_response(message=message.INTERNAL_SERVER_ERROR,status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Update Particular Event
+class EventsUpdateView(APIView):
+    permission_classes = [IsOrganizer]
     def put(self,request,event_id):
         try:
             event = Events.objects.get(pk=event_id)
@@ -109,8 +99,9 @@ class EventsList(APIView):
             }
             return Response(error_response)
 
+# View Booking Details  
 class BookingAPIView(APIView):
-    permission_classes = [IsCustomer]
+    permission_classes = [IsUser]
 
     def post(self, request):
         event_id = request.data.get('event')
@@ -143,9 +134,14 @@ class BookingAPIView(APIView):
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data)
 
+# Get all bookings by user
 class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated,IsOrganizer]
     def get(self,request):
         bookings = Booking.objects.filter(event__organizer=request.user)
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        print(bookings)
+        if len(bookings):
+            serializer = BookingSerializer(bookings, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(message.NO_EVENTS_CREATED, status=status.HTTP_404_NOT_FOUND)

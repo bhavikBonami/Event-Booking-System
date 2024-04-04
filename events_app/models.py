@@ -10,9 +10,7 @@ TICKET_TYPE = [
 
 class Tickets(models.Model):    
     type = models.CharField(max_length=50, choices=TICKET_TYPE)
-    ticket_price = models.IntegerField()
     active = models.BooleanField(default=True)
-    organizer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now_add=True)
 

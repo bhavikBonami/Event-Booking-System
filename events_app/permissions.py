@@ -12,7 +12,4 @@ class IsOrganizer(permissions.BasePermission):
 
 class IsUser(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.user:
-            return True
-        else:
-            False
+        return bool(request.user)
