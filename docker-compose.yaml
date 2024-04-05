@@ -9,7 +9,7 @@ services:
       - redis
 
   celery:
-    image: celery:latest
+    image: celery
     command: celery -A ems worker --loglevel=info
     depends_on:
       - redis
@@ -17,4 +17,4 @@ services:
       - REDIS_HOST=redis
 
   redis:
-    image: redis:latest
+    image: redis
