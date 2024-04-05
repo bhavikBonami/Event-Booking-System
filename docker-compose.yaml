@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:8000"
+    depends_on:
+      - redis
+
+  celery:
+    image: celery:latest
+    command: celery -A ems worker --loglevel=info
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: redis:latest
